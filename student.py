@@ -532,7 +532,7 @@ class Student:
                 "phone": self.var_phone.get(),
                 "address": self.var_address.get(),
                 "teacher": self.var_teacher.get(),
-                "photo_sample": self.var_radio1.get()
+                "photo_sample": self.var_radio1.get() or "No"
             }
 
             collection.insert_one(student_data)
@@ -581,6 +581,9 @@ class Student:
         cursor_row = self.student_table.focus()
         content = self.student_table.item(cursor_row)
         data = content['values']
+        # SAFETY CHECK
+        if not data or len(data) < 13:
+            return
 
         self.var_department.set(data[0])
         self.var_course.set(data[1])
