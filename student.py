@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
+from tkinter import messagebox
+from pymongo import MongoClient
 
 
 class Student:
@@ -8,6 +10,29 @@ class Student:
         self.root = root
         self.root.geometry("1530x990+0+0")
         self.root.title("Face Recognition System")
+
+        #variables
+
+        self.var_department=tk.StringVar()
+        self.var_course=tk.StringVar()
+        self.var_year=tk.StringVar()
+        self.var_semester=tk.StringVar()
+        self.var_std_id=tk.StringVar()
+        self.var_std_name=tk.StringVar()
+        self.var_div=tk.StringVar()
+        self.var_roll=tk.StringVar()
+        self.var_gender=tk.StringVar()
+        self.var_dob=tk.StringVar()
+        self.var_email=tk.StringVar()
+        self.var_phone=tk.StringVar()
+        self.var_address=tk.StringVar()
+        self.var_teacher=tk.StringVar()
+        
+       
+
+
+
+
 
         # Background image
         bg_img = Image.open(r"images\image background 1.jpg")
@@ -59,6 +84,7 @@ class Student:
         dep_label.grid(row=0, column=0, padx=2, pady=15,sticky=tk.W)
         dep_combo = ttk.Combobox(
             current_course_frame,
+            textvariable=self.var_department,
             font=("times new roman", 12, "bold"),
             state="readonly"
         )
@@ -76,6 +102,7 @@ class Student:
         course_label.grid(row=0, column=2, padx=10, pady=15,sticky=tk.W)
         course_combo = ttk.Combobox(
             current_course_frame,
+             textvariable=self.var_course,
             font=("times new roman", 12, "bold"),
             state="readonly"
         )
@@ -93,6 +120,7 @@ class Student:
         year_label.grid(row=1, column=0, padx=2, pady=15,sticky=tk.W)
         year_combo = ttk.Combobox(
             current_course_frame,
+            textvariable=self.var_year,
             font=("times new roman", 12, "bold"),
             state="readonly"
         )
@@ -104,12 +132,14 @@ class Student:
         sem_label = tk.Label(
             current_course_frame,
             text="Semester",
+
             font=("times new roman", 12, "bold"),
             bg="white"
         )
         sem_label.grid(row=1, column=2, padx=10, pady=10)
         sem_combo = ttk.Combobox(
             current_course_frame,
+             textvariable=self.var_semester,
             font=("times new roman", 12, "bold"),
             state="readonly"
         )
@@ -130,13 +160,14 @@ class Student:
         #student id
         student_id_label = tk.Label(
             class_student_frame,
-            text="Semester",
+            text="Student ID",
             font=("times new roman", 12, "bold"),
             bg="white"
         )
         student_id_label.grid(row=0, column=0, padx=10, pady=10)
         student_id_entry = tk.Entry(
             class_student_frame,
+             textvariable=self.var_std_id,
             font=("times new roman", 12, "bold"),
             bg="white"
         )
@@ -151,6 +182,7 @@ class Student:
         student_name_label.grid(row=0, column=2, padx=10, pady=10)
         student_name_entry = tk.Entry(
             class_student_frame,
+             textvariable=self.var_std_name,
             font=("times new roman", 12, "bold"),
             bg="white"
         )
@@ -165,6 +197,7 @@ class Student:
         class_div_label.grid(row=1, column=0, padx=10, pady=10)
         class_div_entry = tk.Entry(
             class_student_frame,
+             textvariable=self.var_div,
             font=("times new roman", 12, "bold"),
             bg="white"
         )
@@ -179,6 +212,7 @@ class Student:
         roll_no_label.grid(row=1, column=2, padx=10, pady=10)
         roll_no_entry = tk.Entry(
             class_student_frame,
+             textvariable=self.var_roll,
             font=("times new roman", 12, "bold"),
             bg="white"
         )
@@ -193,6 +227,7 @@ class Student:
         email_label.grid(row=2, column=0, padx=10, pady=10)
         email_entry = tk.Entry(
             class_student_frame,
+             textvariable=self.var_email,
             font=("times new roman", 12, "bold"),
             bg="white"
         )
@@ -207,6 +242,7 @@ class Student:
         phone_label.grid(row=2, column=2, padx=10, pady=10)
         phone_entry = tk.Entry(
             class_student_frame,
+             textvariable=self.var_phone,
             font=("times new roman", 12, "bold"),
             bg="white"
         )
@@ -221,6 +257,7 @@ class Student:
         address_label.grid(row=3, column=0, padx=10, pady=10)
         address_entry = tk.Entry(
             class_student_frame,
+             textvariable=self.var_address,
             font=("times new roman", 12, "bold"),
             bg="white"
         )
@@ -235,22 +272,27 @@ class Student:
         teacher_label.grid(row=3, column=2, padx=10, pady=10)
         teacher_entry = tk.Entry(
             class_student_frame,
+             textvariable=self.var_teacher,
             font=("times new roman", 12, "bold"),
             bg="white"
         )
         teacher_entry.grid(row=3, column=3,padx=10, pady=10,sticky=tk.W)
         #radio buttons
+        self.var_radio1=tk.StringVar()
         radiobutton1=ttk.Radiobutton(
             class_student_frame,
+            variable=self.var_radio1,
             text="Take Photo Sample",
-            variable=1,
+            
             value=1,
         )
+        self.var_radio2=tk.StringVar()
         radiobutton1.grid(row=4,column=0)
         radiobutton2=ttk.Radiobutton(
             class_student_frame,
+            variable=self.var_radio1,
             text="No Photo Sample",
-            variable=1,
+        
             value=2,
         )
         radiobutton2.grid(row=4,column=1)
@@ -266,6 +308,7 @@ class Student:
         save_btn=tk.Button(
             btn_frame,
             text="Save",
+            command=self.add_data,
             font=("times new roman", 12, "bold"),
             bg="blue",
             fg="white",
@@ -276,6 +319,7 @@ class Student:
         update_btn=tk.Button(
             btn_frame,
             text="Update",
+            command=self.update_data,
             font=("times new roman", 12, "bold"),
             bg="blue",
             fg="white",
@@ -286,6 +330,7 @@ class Student:
         delete_btn=tk.Button(
             btn_frame,
             text="Delete",
+            command=self.delete_data,
             font=("times new roman", 12, "bold"),
             bg="blue",
             fg="white",
@@ -296,6 +341,7 @@ class Student:
         reset_btn=tk.Button(
             btn_frame,
             text="Reset",
+            command=self.reset_data,
             font=("times new roman", 12, "bold"),
             bg="blue",
             fg="white",
@@ -460,7 +506,171 @@ class Student:
         self.student_table.column("teacher", width=100)
         self.student_table.column("photo", width=150)
         self.student_table.pack(fill=tk.BOTH, expand=1)
+        self.student_table.bind("<ButtonRelease>", self.get_cursor)
+        self.fetch_data()
+    #function declaration
+    def add_data(self):
+        if self.var_department.get() == "Select Department" or self.var_std_name.get() == "" or self.var_std_id.get() == "":
+            messagebox.showerror("Error", "All fields are required", parent=self.root)
+            return
 
+        try:
+            client = MongoClient("mongodb://localhost:27017/")
+            db = client["student_db"]
+            collection = db["students"]
+
+            student_data = {
+                "department": self.var_department.get(),
+                "course": self.var_course.get(),
+                "year": self.var_year.get(),
+                "semester": self.var_semester.get(),
+                "student_id": self.var_std_id.get(),
+                "name": self.var_std_name.get(),
+                "division": self.var_div.get(),
+                "roll": self.var_roll.get(),
+                "email": self.var_email.get(),
+                "phone": self.var_phone.get(),
+                "address": self.var_address.get(),
+                "teacher": self.var_teacher.get(),
+                "photo_sample": self.var_radio1.get()
+            }
+
+            collection.insert_one(student_data)
+            self.fetch_data()
+
+            messagebox.showinfo("Success", "Student details added successfully", parent=self.root)
+            client.close()
+
+        except Exception as es:
+            messagebox.showerror("Error", f"Due To: {str(es)}", parent=self.root)
+    #fetch data
+    def fetch_data(self):
+        try:
+            client = MongoClient("mongodb://localhost:27017/")
+            db = client["student_db"]
+            collection = db["students"]
+
+            # Clear previous data
+            self.student_table.delete(*self.student_table.get_children())
+
+            records = collection.find()
+            for row in records:
+                self.student_table.insert('', tk.END, values=(
+                    row['department'],
+                    row['course'],
+                    row['year'],
+                    row['semester'],
+                    row['student_id'],
+                    row['name'],
+                    row['division'],
+                    row['roll'],
+                    row['email'],
+                    row['phone'],
+                    row['address'],
+                    row['teacher'],
+                    row['photo_sample']
+                ))
+
+            client.close()
+        except Exception as es:
+            messagebox.showerror("Error", f"Due To: {str(es)}", parent=self.root)
+
+
+    #   GET CURSOR
+    def get_cursor(self, event=""):
+        cursor_row = self.student_table.focus()
+        content = self.student_table.item(cursor_row)
+        data = content['values']
+
+        self.var_department.set(data[0])
+        self.var_course.set(data[1])
+        self.var_year.set(data[2])
+        self.var_semester.set(data[3])
+        self.var_std_id.set(data[4])
+        self.var_std_name.set(data[5])
+        self.var_div.set(data[6])
+        self.var_roll.set(data[7])
+        self.var_email.set(data[8])
+        self.var_phone.set(data[9])
+        self.var_address.set(data[10])
+        self.var_teacher.set(data[11])
+        self.var_radio1.set(data[12])
+    #update function
+    def update_data(self):
+        if self.var_department.get() == "Select Department" or self.var_std_name.get() == "" or self.var_std_id.get() == "":
+            messagebox.showerror("Error", "All fields are required", parent=self.root)
+            return
+        try:
+            Update = messagebox.askyesno("Update", "Do you want to update this student details?", parent=self.root)
+            if Update > 0:
+                client = MongoClient("mongodb://localhost:27017/")
+                db = client["student_db"]
+                collection = db["students"]
+
+                student_data = {
+                    "department": self.var_department.get(),
+                    "course": self.var_course.get(),
+                    "year": self.var_year.get(),
+                    "semester": self.var_semester.get(),
+                    "name": self.var_std_name.get(),
+                    "division": self.var_div.get(),
+                    "roll": self.var_roll.get(),
+                    "email": self.var_email.get(),
+                    "phone": self.var_phone.get(),
+                    "address": self.var_address.get(),
+                    "teacher": self.var_teacher.get(),
+                    "photo_sample": self.var_radio1.get()
+                }
+
+                collection.update_one(
+                    {"student_id": self.var_std_id.get()},
+                    {"$set": student_data}
+                )
+                self.fetch_data()
+                messagebox.showinfo("Success", "Student details updated successfully", parent=self.root)
+                client.close()
+            else:
+                if not Update:
+                    return
+        except Exception as es:
+            messagebox.showerror("Error", f"Due To: {str(es)}", parent=self.root)
+
+    #delete function
+    def delete_data(self):
+        if self.var_std_id.get() == "":
+            messagebox.showerror("Error", "Student ID must be required", parent=self.root)
+            return
+        try:
+            Delete = messagebox.askyesno("Delete", "Do you want to delete this student details?", parent=self.root)
+            if Delete > 0:
+                client = MongoClient("mongodb://localhost:27017/")
+                db = client["student_db"]
+                collection = db["students"]
+
+                collection.delete_one({"student_id": self.var_std_id.get()})
+                self.fetch_data()
+                messagebox.showinfo("Success", "Student details deleted successfully", parent=self.root)
+                client.close()
+            else:
+                if not Delete:
+                    return
+        except Exception as es:
+            messagebox.showerror("Error", f"Due To: {str(es)}", parent=self.root)
+    #reset function
+    def reset_data(self):
+        self.var_department.set("Select Department")
+        self.var_course.set("Select Course")
+        self.var_year.set("Select Year")
+        self.var_semester.set("Select Semester")
+        self.var_std_id.set("")
+        self.var_std_name.set("")
+        self.var_div.set("")
+        self.var_roll.set("")
+        self.var_email.set("")
+        self.var_phone.set("")
+        self.var_address.set("")
+        self.var_teacher.set("")
+        self.var_radio1.set("")
 if __name__ == "__main__":
     root = tk.Tk()
     obj = Student(root)
