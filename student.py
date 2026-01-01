@@ -3,6 +3,7 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 from tkinter import messagebox
 from pymongo import MongoClient
+import cv2
 
 
 class Student:
@@ -278,24 +279,22 @@ class Student:
         )
         teacher_entry.grid(row=3, column=3,padx=10, pady=10,sticky=tk.W)
         #radio buttons
-        self.var_radio1=tk.StringVar()
-        radiobutton1=ttk.Radiobutton(
-            class_student_frame,
-            variable=self.var_radio1,
-            text="Take Photo Sample",
-            
-            value=1,
-        )
-        self.var_radio2=tk.StringVar()
-        radiobutton1.grid(row=4,column=0)
-        radiobutton2=ttk.Radiobutton(
-            class_student_frame,
-            variable=self.var_radio1,
-            text="No Photo Sample",
-        
-            value=2,
-        )
-        radiobutton2.grid(row=4,column=1)
+        # self.var_radio1=tk.StringVar()
+        # radiobutton1=ttk.Radiobutton(
+        #     class_student_frame,
+        #     variable=self.var_radio1,
+        #     text="Take Photo Sample",
+        #     value="yes",
+        # )
+        # self.var_radio2=tk.StringVar()
+        # radiobutton1.grid(row=4,column=0)
+        # radiobutton2=ttk.Radiobutton(
+        #     class_student_frame,
+        #     variable=self.var_radio1,
+        #     text="No Photo Sample",
+        #     value="no",
+        # )
+        # radiobutton2.grid(row=4,column=1)
 
         #button frame
         btn_frame = tk.Frame(
@@ -358,6 +357,7 @@ class Student:
         take_photo_btn=tk.Button(
             btn_frame1,
             text="Take Photo Sample",
+            command=self.generatedataset,
             font=("times new roman", 12, "bold"),
             bg="blue",
             fg="white",
@@ -532,15 +532,22 @@ class Student:
                 "phone": self.var_phone.get(),
                 "address": self.var_address.get(),
                 "teacher": self.var_teacher.get(),
-                "photo_sample": self.var_radio1.get() or "No"
+                "photo_sample": "No"
             }
-
+            existing_student = collection.find_one(
+                {"student_id": self.var_std_id.get()}
+            )
+            if existing_student:
+                messagebox.showerror("Error", "Student ID already exists", parent=self.root)
+                client.close()
+                return
+            
             collection.insert_one(student_data)
+
             self.fetch_data()
 
             messagebox.showinfo("Success", "Student details added successfully", parent=self.root)
             client.close()
-
         except Exception as es:
             messagebox.showerror("Error", f"Due To: {str(es)}", parent=self.root)
     #fetch data
@@ -556,19 +563,19 @@ class Student:
             records = collection.find()
             for row in records:
                 self.student_table.insert('', tk.END, values=(
-                    row['department'],
-                    row['course'],
-                    row['year'],
-                    row['semester'],
-                    row['student_id'],
-                    row['name'],
-                    row['division'],
-                    row['roll'],
-                    row['email'],
-                    row['phone'],
-                    row['address'],
-                    row['teacher'],
-                    row['photo_sample']
+                    row.get('department',""),
+                    row.get('course',""),
+                    row.get('year',""),
+                    row.get('semester',""),
+                    row.get('student_id',""),
+                    row.get('name',""),
+                    row.get('division',""),
+                    row.get('roll',""),
+                    row.get('email',""),
+                    row.get('phone',""),
+                    row.get('address',""),
+                    row.get('teacher',""),
+                    row.get('photo_sample',"")
                 ))
 
             client.close()
@@ -597,7 +604,7 @@ class Student:
         self.var_phone.set(data[9])
         self.var_address.set(data[10])
         self.var_teacher.set(data[11])
-        self.var_radio1.set(data[12])
+        # self.var_radio1.set(data[12])
     #update function
     def update_data(self):
         if self.var_department.get() == "Select Department" or self.var_std_name.get() == "" or self.var_std_id.get() == "":
@@ -622,7 +629,6 @@ class Student:
                     "phone": self.var_phone.get(),
                     "address": self.var_address.get(),
                     "teacher": self.var_teacher.get(),
-                    "photo_sample": self.var_radio1.get()
                 }
 
                 collection.update_one(
@@ -674,7 +680,138 @@ class Student:
         self.var_address.set("")
         self.var_teacher.set("")
         self.var_radio1.set("")
+
+
+    def generatedataset(self):
+        if (
+            self.var_department.get() == "Select Department"
+            or self.var_std_name.get() == ""
+            or self.var_std_id.get() == ""
+        ):
+            messagebox.showerror("Error", "All fields are required", parent=self.root)
+            return
+
+        try:
+            # ================= MongoDB =================
+            client = MongoClient("mongodb://localhost:27017/")
+            db = client["student_db"]
+            collection = db["students"]
+
+            student_data = {
+                "department": self.var_department.get(),
+                "course": self.var_course.get(),
+                "year": self.var_year.get(),
+                "semester": self.var_semester.get(),
+                "student_id": self.var_std_id.get(),
+                "name": self.var_std_name.get(),
+                "division": self.var_div.get(),
+                "roll": self.var_roll.get(),
+                "email": self.var_email.get(),
+                "phone": self.var_phone.get(),
+                "address": self.var_address.get(),
+                "teacher": self.var_teacher.get(),
+                "photo_sample": "No"
+            }
+
+            existing_student = collection.find_one(
+                {"student_id": self.var_std_id.get()}
+            ) 
+            if not existing_student:
+                messagebox.showerror("Error", "Student record not found. Please add the student details first.", parent=self.root)
+                client.close()  
+                return
+            
+                   
+            # ================= Face Classifier =================
+            face_classifier = cv2.CascadeClassifier(
+                "haarcascade_frontalface_default.xml"
+            )
+
+            if face_classifier.empty():
+                messagebox.showerror("Error", "Haarcascade file not found", parent=self.root)
+                return
+
+            def face_cropped(img):
+                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                faces = face_classifier.detectMultiScale(gray, 1.3, 5)
+
+                for (x, y, w, h) in faces:
+                    return img[y:y+h, x:x+w]
+
+                return None
+
+            # ================= Camera =================
+            cap = cv2.VideoCapture(0)
+
+            if not cap.isOpened():
+                messagebox.showerror("Error", "Camera not accessible", parent=self.root)
+                return
+
+            import os
+            os.makedirs("data", exist_ok=True)
+
+            img_id = 0
+
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+
+                cropped_face = face_cropped(frame)
+
+                if cropped_face is not None:
+                    img_id += 1
+                    face = cv2.resize(cropped_face, (450, 450))
+                    face = cv2.cvtColor(face, cv2.COLOR_BGR2GRAY)
+
+                    file_name_path = (
+                        "data/user."
+                        + str(self.var_std_id.get())
+                        + "."
+                        + str(img_id)
+                        + ".jpg"
+                    )
+
+                    cv2.imwrite(file_name_path, face)
+                    cv2.putText(
+                        face,
+                        str(img_id),
+                        (50, 50),
+                        cv2.FONT_HERSHEY_COMPLEX,
+                        2,
+                        (255, 255, 255),
+                        2,
+                    )
+                    cv2.imshow("Cropped Face", face)
+
+                if cv2.waitKey(1) == 13 or img_id == 100:
+                    break
+
+            # Update photo sample status in database
+            collection.update_one(
+                {"student_id": self.var_std_id.get()},
+                {"$set": {"photo_sample": "Yes"}}
+            )    
+
+            cap.release()
+            cv2.destroyAllWindows()
+            client.close()
+
+            messagebox.showinfo("Result", "Generating dataset completed!!!", parent=self.root)
+            
+            self.fetch_data()
+
+        except Exception as es:
+            messagebox.showerror("Error", f"Due To: {str(es)}", parent=self.root)
+
+
+
 if __name__ == "__main__":
+    client = MongoClient("mongodb://localhost:27017/")
+    db = client["student_db"]
+    collection = db["students"]
+    collection.create_index("student_id", unique=True)
+    client.close()
     root = tk.Tk()
     obj = Student(root)
     root.mainloop()        #root.mainloop() starts the Tkinter event loop that keeps the GUI running and responsive until the window is closed.
