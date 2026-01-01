@@ -3,7 +3,7 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 from student import Student
 import os
-
+from train import Train
 class Face_Recognition_System:
     def __init__(self, root):
         self.root = root
@@ -40,6 +40,7 @@ class Face_Recognition_System:
 
         b5 = tk.Button(img_l, text="Train",
                        font=("times new roman", 26, "bold"),
+                       command=self.train_data,
                        bg="darkblue", fg="white", cursor="hand2")
         b5.place(x=800, y=200, width=220, height=100)
 
@@ -75,12 +76,14 @@ class Face_Recognition_System:
             os.startfile("data")
         except Exception as e:
             print(f"Error opening folder: {e}")
-
+    
     def student_details(self):
         self.new_window=tk.Toplevel(self.root)
         self.app=Student(self.new_window)
 
-
+    def train_data(self):
+        self.new_window=tk.Toplevel(self.root)
+        self.app=Train(self.new_window)
 if __name__ == "__main__":
     root = tk.Tk()
     obj = Face_Recognition_System(root)
