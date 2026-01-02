@@ -733,7 +733,7 @@ class Student:
 
             def face_cropped(img):
                 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                faces = face_classifier.detectMultiScale(gray, 1.3, 5)
+                faces = face_classifier.detectMultiScale(gray, 1.3, 5) #It detects faces (or objects) in an image and returns their locations.LBPH cannot find faces by itself.LBPH only recognizes a face.Thus we use detectMultiScale to find faces first.
 
                 for (x, y, w, h) in faces:
                     return img[y:y+h, x:x+w]

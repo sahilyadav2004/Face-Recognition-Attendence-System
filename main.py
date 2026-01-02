@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 from student import Student
 import os
 from train import Train
+from face_recognition import face_recognition
 class Face_Recognition_System:
     def __init__(self, root):
         self.root = root
@@ -52,6 +53,7 @@ class Face_Recognition_System:
         # ===== Second Row =====
         b2 = tk.Button(img_l, text="Detect Face",
                        font=("times new roman", 26, "bold"),
+                       command=self.face_recognition,
                        bg="darkblue", fg="white", cursor="hand2")
         b2.place(x=200, y=500, width=220, height=100)
 
@@ -84,6 +86,12 @@ class Face_Recognition_System:
     def train_data(self):
         self.new_window=tk.Toplevel(self.root)
         self.app=Train(self.new_window)
+
+    def face_recognition(self):
+        self.new_window=tk.Toplevel(self.root)
+        self.app=face_recognition(self.new_window)   
+        
+             
 if __name__ == "__main__":
     root = tk.Tk()
     obj = Face_Recognition_System(root)
