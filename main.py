@@ -94,8 +94,10 @@ class Face_Recognition_System:
         self.app=face_recognition(self.new_window)   
 
     def attendance_system(self):
-        self.new_window=tk.Toplevel(self.root)
-        self.app=attendance(self.new_window) 
+        self.new_window = tk.Toplevel(self.root)
+        self.new_window.grab_set()          # 🔒 make modal
+        self.new_window.focus_force()
+        self.app = attendance(self.new_window)
              
 if __name__ == "__main__":
     root = tk.Tk()
