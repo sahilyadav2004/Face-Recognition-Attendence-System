@@ -6,7 +6,8 @@ from pymongo import MongoClient
 import cv2
 import os
 import numpy as np
-
+from datetime import datetime
+from time import strftime
 
 
 class face_recognition:
@@ -29,7 +30,19 @@ class face_recognition:
         update_btn.place(x=570, y=350, width=400, height=55)
 
 
-
+    #attendence
+    def mark_attendance(self, sid, name):
+        with open("attendance.csv", "r+", newline="\n") as f:
+            myDataList = f.readlines()
+            name_list = []
+            for line in myDataList:
+                entry = line.split((","))
+                name_list.append(entry[0])
+            if (sid not in name_list) and (name not in name_list):
+                now = datetime.now()
+                dtString = now.strftime("%Y-%m-%d %H:%M:%S")
+                f.writelines(f"\n{sid},{name},{dtString},Present")
+            
 
         #===============face recognition=================
     def recognition(self):
@@ -53,17 +66,20 @@ class face_recognition:
 
                     if student:
                         name = student["name"]
+                        sid = student.get("student_id", "N/A")
                     else:
                         name = "Unknown"
+                        sid = "N/A"
 
                     confidence_text = f"{int(100 - distance)}%"
                 else:
                     name = "Unknown"
+                    sid = "N/A"
                     confidence_text = "0%"
-
+                cv2.putText(img, f"ID: {sid}", (x, y - 55), cv2.FONT_HERSHEY_COMPLEX, 0.8, (255,255,255), 3)
                 cv2.putText(img, str(name), (x, y - 5), cv2.FONT_HERSHEY_COMPLEX, 0.8, (255,255,255), 3)
                 cv2.putText(img, str(confidence_text), (x, y + h + 25), cv2.FONT_HERSHEY_COMPLEX, 0.8, (255,255,255), 3)
-
+                self.mark_attendance(sid, name)
                 coord.append((x, y, w, h))
 
             return coord
