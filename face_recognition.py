@@ -30,18 +30,40 @@ class face_recognition:
         update_btn.place(x=570, y=350, width=400, height=55)
 
 
-    #attendence
-    def mark_attendance(self, sid, name):
+    #====================attendence====================
+    def mark_attendance(self, sid, name, dep):
         with open("attendance.csv", "r+", newline="\n") as f:
             myDataList = f.readlines()
-            name_list = []
+
+            sid_list = []
+            last_attendance_id = 0
+
             for line in myDataList:
-                entry = line.split((","))
-                name_list.append(entry[0])
-            if (sid not in name_list) and (name not in name_list):
+                line = line.strip()
+                if not line:
+                    continue
+
+                entry = line.split(",")
+
+                if len(entry) < 2:
+                    continue
+
+                # entry format:
+                # [attendance_id, sid, name, dep, date, time, status]
+
+                last_attendance_id = int(entry[0])   # keep updating → last row
+                sid_list.append(entry[1])
+
+            if sid not in sid_list:
+                new_attendance_id = last_attendance_id + 1
+
                 now = datetime.now()
-                dtString = now.strftime("%Y-%m-%d %H:%M:%S")
-                f.writelines(f"\n{sid},{name},{dtString},Present")
+                date = now.strftime("%Y-%m-%d")
+                time = now.strftime("%H:%M:%S")
+
+                f.write(
+                    f"{new_attendance_id},{sid},{name},{dep},{date},{time},Present\n"
+                )
             
 
         #===============face recognition=================
@@ -67,19 +89,23 @@ class face_recognition:
                     if student:
                         name = student["name"]
                         sid = student.get("student_id", "N/A")
+                        dep= student.get("department", "N/A")
                     else:
                         name = "Unknown"
                         sid = "N/A"
+                        dep="N/A"
 
                     confidence_text = f"{int(100 - distance)}%"
                 else:
                     name = "Unknown"
                     sid = "N/A"
+                    dep="N/A"
                     confidence_text = "0%"
                 cv2.putText(img, f"ID: {sid}", (x, y - 55), cv2.FONT_HERSHEY_COMPLEX, 0.8, (255,255,255), 3)
                 cv2.putText(img, str(name), (x, y - 5), cv2.FONT_HERSHEY_COMPLEX, 0.8, (255,255,255), 3)
                 cv2.putText(img, str(confidence_text), (x, y + h + 25), cv2.FONT_HERSHEY_COMPLEX, 0.8, (255,255,255), 3)
-                self.mark_attendance(sid, name)
+                if(name!="" and name!="unknown" and sid!="N/A"):
+                    self.mark_attendance(sid, name,dep)
                 coord.append((x, y, w, h))
 
             return coord

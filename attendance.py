@@ -8,13 +8,24 @@ import os
 import numpy as np
 from datetime import datetime
 from time import strftime
+import csv
+from tkinter import filedialog
 
-
+mydata=[]
 class attendance:
     def __init__(self, root):
         self.root = root
         self.root.title("Face Recognition Training")
         self.root.geometry("1530x790+0+0")
+
+        # text variables
+        self.var_attend_id=tk.StringVar()
+        self.var_attend_roll=tk.StringVar()
+        self.var_attend_name=tk.StringVar()
+        self.var_attend_dep=tk.StringVar()
+        self.var_attend_time=tk.StringVar()
+        self.var_attend_date=tk.StringVar()
+        self.var_attend_status=tk.StringVar()
 
         title_label = tk.Label(self.root, text="Attendance System", font=("times new roman", 35, "bold"),bg="white",fg="blue")
         title_label.place(x=0, y=0, width=1530, height=55)
@@ -39,38 +50,38 @@ class attendance:
         #label and entry
         attendance_id_label = tk.Label(left_inside_frame, text="Attendance ID:", font=("times new roman", 12, "bold"), bg="white")
         attendance_id_label.grid(row=0, column=0, padx=10, pady=10, sticky=tk.W)
-        attendance_id_entry = tk.Entry(left_inside_frame, width=20, font=("times new roman", 12, "bold"))
+        attendance_id_entry = tk.Entry(left_inside_frame, width=20, textvariable=self.var_attend_id,font=("times new roman", 12, "bold"))
         attendance_id_entry.grid(row=0, column=1, padx=10, pady=10, sticky=tk.W)
 
         roll_no_label = tk.Label(left_inside_frame, text="Roll No:", font=("times new roman", 12, "bold"), bg="white")
         roll_no_label.grid(row=0, column=2, padx=10, pady=10, sticky=tk.W)
-        roll_no_entry = tk.Entry(left_inside_frame, width=20, font=("times new roman", 12, "bold"))
+        roll_no_entry = tk.Entry(left_inside_frame, width=20,textvariable=self.var_attend_roll, font=("times new roman", 12, "bold"))
         roll_no_entry.grid(row=0, column=3, padx=10, pady=10, sticky=tk.W)
 
         name_label = tk.Label(left_inside_frame, text="Name:", font=("times new roman", 12, "bold"), bg="white")
         name_label.grid(row=1, column=0, padx=10, pady=10, sticky=tk.W)
-        name_entry = tk.Entry(left_inside_frame, width=20, font=("times new roman", 12, "bold"))
+        name_entry = tk.Entry(left_inside_frame, width=20,textvariable=self.var_attend_name, font=("times new roman", 12, "bold"))
         name_entry.grid(row=1, column=1, padx=10, pady=10, sticky=tk.W)
 
         department_label = tk.Label(left_inside_frame, text="Department:", font=("times new roman", 12, "bold"), bg="white")
         department_label.grid(row=1, column=2, padx=10, pady=10, sticky=tk.W)
-        department_entry = tk.Entry(left_inside_frame, width=20, font=("times new roman", 12, "bold"))
+        department_entry = tk.Entry(left_inside_frame, width=20,textvariable=self.var_attend_dep, font=("times new roman", 12, "bold"))
         department_entry.grid(row=1, column=3, padx=10, pady=10, sticky=tk.W)
 
         time_label = tk.Label(left_inside_frame, text="Time:", font=("times new roman", 12, "bold"), bg="white")
         time_label.grid(row=2, column=2, padx=10, pady=10, sticky=tk.W)
-        time_entry = tk.Entry(left_inside_frame, width=20, font=("times new roman", 12, "bold"))
+        time_entry = tk.Entry(left_inside_frame, width=20,textvariable=self.var_attend_time, font=("times new roman", 12, "bold"))
         time_entry.grid(row=2, column=3, padx=10, pady=10, sticky=tk.W)
 
         date_label= tk.Label(left_inside_frame, text="Date:", font=("times new roman", 12, "bold"), bg="white")
         date_label.grid(row=2, column=0, padx=10, pady=10, sticky=tk.W)
-        date_entry = tk.Entry(left_inside_frame, width=20, font=("times new roman", 12, "bold"))
+        date_entry = tk.Entry(left_inside_frame, width=20,textvariable=self.var_attend_date, font=("times new roman", 12, "bold"))
         date_entry.grid(row=2, column=1, padx=10, pady=10, sticky=tk.W)
         
 
         attendance_label = tk.Label(left_inside_frame, text="Attendance Status:", font=("times new roman", 12, "bold"), bg="white")
         attendance_label.grid(row=3, column=0, padx=10, pady=10, sticky=tk.W)
-        attendance_combo = ttk.Combobox(left_inside_frame, font=("times new roman", 12, "bold"), state="readonly", width=18)
+        attendance_combo = ttk.Combobox(left_inside_frame, font=("times new roman", 12, "bold"),textvariable=self.var_attend_status, state="readonly", width=18)
         attendance_combo["values"] = ("Status", "Present", "Absent")
         attendance_combo.current(0)
         attendance_combo.grid(row=3, column=1, padx=10, pady=10, sticky=tk.W)
@@ -79,13 +90,13 @@ class attendance:
         #buttons frame
         btn_frame = tk.Frame(left_inside_frame, bd=2, relief=tk.RIDGE, bg="white")
         btn_frame.place(x=0, y=400, width=710, height=50)
-        import_btn = tk.Button(btn_frame, text="Import CSV", width=17, font=("times new roman", 12, "bold"), bg="blue", fg="white")
+        import_btn = tk.Button(btn_frame, text="Import CSV",command=self.import_csv, width=17, font=("times new roman", 12, "bold"), bg="blue", fg="white")
         import_btn.grid(row=0, column=0, padx=10, pady=10)
-        export_btn = tk.Button(btn_frame, text="Export CSV", width=17, font=("times new roman", 12, "bold"), bg="blue", fg="white")
+        export_btn = tk.Button(btn_frame, text="Export CSV", command=self.export_csv,width=17, font=("times new roman", 12, "bold"), bg="blue", fg="white")
         export_btn.grid(row=0, column=1, padx=10, pady=10)
         update_btn = tk.Button(btn_frame, text="Update", width=17, font=("times new roman", 12, "bold"), bg="blue", fg="white")
         update_btn.grid(row=0, column=2, padx=10, pady=10)
-        reset_btn = tk.Button(btn_frame, text="Reset", width=17, font=("times new roman", 12, "bold"), bg="blue", fg="white")
+        reset_btn = tk.Button(btn_frame, text="Reset",command=self.reset_data, width=17, font=("times new roman", 12, "bold"), bg="blue", fg="white")
         reset_btn.grid(row=0, column=3, padx=10, pady=10)
 
 
@@ -125,8 +136,64 @@ class attendance:
         self.attendance_table.column("date", width=100)
         self.attendance_table.column("status", width=100)
         self.attendance_table.pack(fill=tk.BOTH, expand=1)
+        self.attendance_table.bind("<ButtonRelease>", self.get_cursor)
         
+    def fetch_data(self, rows):
+        self.attendance_table.delete(*self.attendance_table.get_children())
+        for i in rows:
+            self.attendance_table.insert("", tk.END, values=i)
 
+    #===========import csv================        
+
+    def import_csv(self):
+        global mydata
+        mydata.clear()
+        fln = filedialog.askopenfilename(initialdir=os.getcwd(), title="Open CSV", filetypes=(("CSV File", "*.csv"), ("All File", "*.*")), parent=self.root)
+        with open(fln) as myfile:
+            csvread = csv.reader(myfile, delimiter=",")
+            for i in csvread:
+                mydata.append(i)
+            self.fetch_data(mydata)
+
+
+    #===========export csv================        
+    def export_csv(self):
+        try:
+            if  len(mydata) < 1:
+                messagebox.showerror("No Data", "No data found to export", parent=self.root)
+                return False
+            fln = filedialog.asksaveasfilename(initialdir=os.getcwd(), title="Open CSV", filetypes=(("CSV File", "*.csv"), ("All File", "*.*")), parent=self.root)
+            if not fln:
+                return 
+            with open(fln, mode="w", newline="") as myfile:
+                exp_write = csv.writer(myfile, delimiter=",")
+                for i in mydata:
+                    exp_write.writerow(i)
+                messagebox.showinfo("Data Exported", "Your data has been exported to " + os.path.basename(fln) + " successfully")   
+        except Exception as es:
+            messagebox.showerror("Error", f"Due To :{str(es)}", parent=self.root)     
+
+
+    def get_cursor(self,event=""):
+        cursor_row = self.attendance_table.focus()
+        content = self.attendance_table.item(cursor_row)
+        data = content["values"]
+        self.var_attend_id.set(data[0])
+        self.var_attend_roll.set(data[1])
+        self.var_attend_name.set(data[2])
+        self.var_attend_dep.set(data[3])
+        self.var_attend_time.set(data[4])
+        self.var_attend_date.set(data[5])
+        self.var_attend_status.set(data[6])  
+
+    def reset_data(self):
+        self.var_attend_id.set("")
+        self.var_attend_roll.set("")
+        self.var_attend_name.set("")
+        self.var_attend_dep.set("")
+        self.var_attend_time.set("")
+        self.var_attend_date.set("")
+        self.var_attend_status.set("")             
 
 if __name__ == "__main__":
     root = tk.Tk()
