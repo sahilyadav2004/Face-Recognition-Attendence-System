@@ -6,6 +6,8 @@ import os
 from train import Train
 from face_recognition import face_recognition
 from attendance import attendance
+from developer import Developer
+from help import Help
 class Face_Recognition_System:
     def __init__(self, root):
         self.root = root
@@ -48,6 +50,7 @@ class Face_Recognition_System:
         b5.place(x=800, y=200, width=220, height=100)
 
         b7 = tk.Button(img_l, text="Developer",
+                          command=self.developer,
                        font=("times new roman", 26, "bold"),
                        bg="darkblue", fg="white", cursor="hand2")
         b7.place(x=1100, y=200, width=220, height=100)
@@ -60,6 +63,7 @@ class Face_Recognition_System:
         b2.place(x=200, y=500, width=220, height=100)
 
         b4 = tk.Button(img_l, text="Help",
+                          command=self.help,
                        font=("times new roman", 26, "bold"),
                        bg="darkblue", fg="white", cursor="hand2")
         b4.place(x=500, y=500, width=220, height=100)
@@ -72,6 +76,7 @@ class Face_Recognition_System:
 
         b8 = tk.Button(img_l, text="Exit",
                        font=("times new roman", 26, "bold"),
+                          command=self.exit,
                        bg="darkblue", fg="white", cursor="hand2")
         b8.place(x=1100, y=500, width=220, height=100)
     
@@ -80,7 +85,11 @@ class Face_Recognition_System:
             os.startfile("data")
         except Exception as e:
             print(f"Error opening folder: {e}")
-    
+    def exit(self):
+        self.exit=tk.messagebox.askyesno("Face Recognition","Are you sure to exit this project",parent=self.root)
+        if self.exit>0:
+            self.root.destroy()
+
     def student_details(self):
         self.new_window=tk.Toplevel(self.root)
         self.app=Student(self.new_window)
@@ -98,7 +107,14 @@ class Face_Recognition_System:
         self.new_window.grab_set()          # 🔒 make modal
         self.new_window.focus_force()
         self.app = attendance(self.new_window)
-             
+
+    def developer(self):
+        self.new_window=tk.Toplevel(self.root)
+        self.app=Developer(self.new_window)
+        
+    def help(self):
+        self.new_window=tk.Toplevel(self.root)
+        self.app=Help(self.new_window)
 if __name__ == "__main__":
     root = tk.Tk()
     obj = Face_Recognition_System(root)
