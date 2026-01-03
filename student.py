@@ -1,3 +1,4 @@
+import os
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
@@ -28,7 +29,8 @@ class Student:
         self.var_phone=tk.StringVar()
         self.var_address=tk.StringVar()
         self.var_teacher=tk.StringVar()
-        
+        self.search_var = tk.StringVar()
+
        
 
 
@@ -353,7 +355,7 @@ class Student:
             bg="white"
         )
         btn_frame1.place(x=3, y=251, width=690, height=40)
-
+        btn_frame1.grid_columnconfigure(0, weight=1)
         take_photo_btn=tk.Button(
             btn_frame1,
             text="Take Photo Sample",
@@ -363,19 +365,7 @@ class Student:
             fg="white",
             width=36
         )
-        take_photo_btn.grid(row=1,column=0,padx=4,pady=1)
-
-        update_photo_btn=tk.Button(
-            btn_frame1,
-            text="Update Photo Sample",
-            font=("times new roman", 12, "bold"),
-            bg="blue",
-            fg="white",
-            width=36
-        )
-        update_photo_btn.grid(row=1,column=1,padx=4,pady=1)
-
-        
+        take_photo_btn.grid(row=0,column=0,padx=4,pady=1)
 
         # Right Label
         Right_frame = tk.LabelFrame(
@@ -405,15 +395,19 @@ class Student:
         search_label.grid(row=0, column=0, padx=10, pady=10,sticky=tk.W)
         search_combo = ttk.Combobox(
             search_frame,
+            textvariable=self.search_var,
             font=("times new roman", 12, "bold"),
             state="readonly",
             width=15
         )
-        search_combo['values'] = ("Select", "Roll No", "Phone No")
+        search_combo['values'] = ("Select", "Student ID", "Name", "Roll No")
         search_combo.current(0)
         search_combo.grid(row=0, column=1,padx=10, pady=10,sticky=tk.W)
+        self.search_entry_var = tk.StringVar()
+
         search_entry = tk.Entry(
             search_frame,
+            textvariable=self.search_entry_var,
             font=("times new roman", 12, "bold"),
             bg="white",
             width=20
@@ -422,6 +416,7 @@ class Student:
 
         search_btn=tk.Button(
             search_frame,
+            command=self.search_data,
             text="Search",
             font=("times new roman", 12, "bold"),
             bg="blue",
@@ -432,6 +427,7 @@ class Student:
         showall_btn=tk.Button(
             search_frame,
             text="Show All",
+            command=self.fetch_data,
             font=("times new roman", 12, "bold"),
             bg="blue",
             fg="white",
@@ -515,7 +511,8 @@ class Student:
             return
 
         try:
-            client = MongoClient("mongodb://localhost:27017/")
+            #mongodb://localhost:27017/
+            client = MongoClient("mongodb+srv://face:sahil123@cluster0.sbephlz.mongodb.net/?appName=Cluster0")
             db = client["student_db"]
             collection = db["students"]
 
@@ -553,7 +550,7 @@ class Student:
     #fetch data
     def fetch_data(self):
         try:
-            client = MongoClient("mongodb://localhost:27017/")
+            client = MongoClient("mongodb+srv://face:sahil123@cluster0.sbephlz.mongodb.net/?appName=Cluster0")
             db = client["student_db"]
             collection = db["students"]
 
@@ -613,7 +610,7 @@ class Student:
         try:
             Update = messagebox.askyesno("Update", "Do you want to update this student details?", parent=self.root)
             if Update > 0:
-                client = MongoClient("mongodb://localhost:27017/")
+                client = MongoClient("mongodb+srv://face:sahil123@cluster0.sbephlz.mongodb.net/?appName=Cluster0")
                 db = client["student_db"]
                 collection = db["students"]
 
@@ -652,12 +649,22 @@ class Student:
         try:
             Delete = messagebox.askyesno("Delete", "Do you want to delete this student details?", parent=self.root)
             if Delete > 0:
-                client = MongoClient("mongodb://localhost:27017/")
+                student_id = self.var_std_id.get()
+                client = MongoClient("mongodb+srv://face:sahil123@cluster0.sbephlz.mongodb.net/?appName=Cluster0")
                 db = client["student_db"]
                 collection = db["students"]
 
                 collection.delete_one({"student_id": self.var_std_id.get()})
+                data_dir = "data"
+
+                if os.path.exists(data_dir):
+                    for file in os.listdir(data_dir):
+                        if file.startswith(f"user.{student_id}.") and file.endswith(".jpg"):
+                            file_path = os.path.join(data_dir, file)
+                            os.remove(file_path)
+
                 self.fetch_data()
+                self.reset_data()
                 messagebox.showinfo("Success", "Student details deleted successfully", parent=self.root)
                 client.close()
             else:
@@ -679,7 +686,7 @@ class Student:
         self.var_phone.set("")
         self.var_address.set("")
         self.var_teacher.set("")
-        self.var_radio1.set("")
+        
 
 
     def generatedataset(self):
@@ -693,7 +700,7 @@ class Student:
 
         try:
             # ================= MongoDB =================
-            client = MongoClient("mongodb://localhost:27017/")
+            client = MongoClient("mongodb+srv://face:sahil123@cluster0.sbephlz.mongodb.net/?appName=Cluster0")
             db = client["student_db"]
             collection = db["students"]
 
@@ -764,13 +771,14 @@ class Student:
                     face = cv2.resize(cropped_face, (450, 450))
                     face = cv2.cvtColor(face, cv2.COLOR_BGR2GRAY)
 
-                    file_name_path = (
-                        "data/user."
-                        + str(self.var_std_id.get())
-                        + "."
-                        + str(img_id)
-                        + ".jpg"
-                    )
+                    data_dir = "data"
+                    os.makedirs(data_dir, exist_ok=True)
+
+                    file_name_path = os.path.join(
+                            data_dir,
+                            f"user.{self.var_std_id.get()}.{img_id}.jpg"
+)
+
 
                     cv2.imwrite(file_name_path, face)
                     cv2.putText(
@@ -790,8 +798,11 @@ class Student:
             # Update photo sample status in database
             collection.update_one(
                 {"student_id": self.var_std_id.get()},
-                {"$set": {"photo_sample": "Yes"}}
-            )    
+                {"$set": {
+                    "photo_sample": "Yes",
+                    "image_prefix": f"user.{self.var_std_id.get()}"
+                }}
+            )
 
             cap.release()
             cv2.destroyAllWindows()
@@ -804,10 +815,55 @@ class Student:
         except Exception as es:
             messagebox.showerror("Error", f"Due To: {str(es)}", parent=self.root)
 
+    #search function
+    def search_data(self):
+        try:
+            client = MongoClient("mongodb+srv://face:sahil123@cluster0.sbephlz.mongodb.net/?appName=Cluster0")
+            db = client["student_db"]
+            collection = db["students"]
 
+            search_by = self.search_var.get()
+            search_txt = self.search_entry_var.get()
+
+            if search_by == "Select" or search_txt == "":
+                messagebox.showerror("Error", "Please select a search criteria and enter search text", parent=self.root)
+                return
+
+            query = {}
+            if search_by == "Student ID":
+                query["student_id"] = search_txt
+            elif search_by == "Name":
+                query["name"] = {"$regex": search_txt, "$options": "i"}
+            elif search_by == "Roll No":
+                query["roll"] = search_txt
+
+            # Clear previous data
+            self.student_table.delete(*self.student_table.get_children())
+
+            records = collection.find(query)
+            for row in records:
+                self.student_table.insert('', tk.END, values=(
+                    row.get('department',""),
+                    row.get('course',""),
+                    row.get('year',""),
+                    row.get('semester',""),
+                    row.get('student_id',""),
+                    row.get('name',""),
+                    row.get('division',""),
+                    row.get('roll',""),
+                    row.get('email',""),
+                    row.get('phone',""),
+                    row.get('address',""),
+                    row.get('teacher',""),
+                    row.get('photo_sample',"")
+                ))
+
+            client.close()
+        except Exception as es:
+            messagebox.showerror("Error", f"Due To: {str(es)}", parent=self.root)
 
 if __name__ == "__main__":
-    client = MongoClient("mongodb://localhost:27017/")
+    client = MongoClient("mongodb+srv://face:sahil123@cluster0.sbephlz.mongodb.net/?appName=Cluster0")
     db = client["student_db"]
     collection = db["students"]
     collection.create_index("student_id", unique=True)

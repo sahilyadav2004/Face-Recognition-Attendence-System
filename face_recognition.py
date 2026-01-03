@@ -80,7 +80,7 @@ class face_recognition:
                 
                 
                 if distance < 70:
-                    client = MongoClient("mongodb://localhost:27017/")
+                    client = MongoClient("mongodb+srv://face:sahil123@cluster0.sbephlz.mongodb.net/?appName=Cluster0")
                     db = client["student_db"]
                     collection = db["students"]
 
