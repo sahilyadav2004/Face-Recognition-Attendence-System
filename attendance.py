@@ -94,7 +94,7 @@ class attendance:
         import_btn.grid(row=0, column=0, padx=10, pady=10)
         export_btn = tk.Button(btn_frame, text="Export CSV", command=self.export_csv,width=17, font=("times new roman", 12, "bold"), bg="blue", fg="white")
         export_btn.grid(row=0, column=1, padx=10, pady=10)
-        update_btn = tk.Button(btn_frame, text="Update", width=17, font=("times new roman", 12, "bold"), bg="blue", fg="white")
+        update_btn = tk.Button(btn_frame, text="Update",command=self.update_data, width=17, font=("times new roman", 12, "bold"), bg="blue", fg="white")
         update_btn.grid(row=0, column=2, padx=10, pady=10)
         reset_btn = tk.Button(btn_frame, text="Reset",command=self.reset_data, width=17, font=("times new roman", 12, "bold"), bg="blue", fg="white")
         reset_btn.grid(row=0, column=3, padx=10, pady=10)
@@ -174,17 +174,24 @@ class attendance:
             messagebox.showerror("Error", f"Due To :{str(es)}", parent=self.root)     
 
 
-    def get_cursor(self,event=""):
+    def get_cursor(self, event=""):
         cursor_row = self.attendance_table.focus()
+        if not cursor_row:
+            return
+
         content = self.attendance_table.item(cursor_row)
-        data = content["values"]
+        data = content.get("values", [])
+    # 🛑 SAFETY CHECK
+        if len(data) < 7:
+            return
+
         self.var_attend_id.set(data[0])
         self.var_attend_roll.set(data[1])
         self.var_attend_name.set(data[2])
         self.var_attend_dep.set(data[3])
         self.var_attend_time.set(data[4])
         self.var_attend_date.set(data[5])
-        self.var_attend_status.set(data[6])  
+        self.var_attend_status.set(data[6])
 
     def reset_data(self):
         self.var_attend_id.set("")
@@ -193,9 +200,38 @@ class attendance:
         self.var_attend_dep.set("")
         self.var_attend_time.set("")
         self.var_attend_date.set("")
-        self.var_attend_status.set("")             
+        self.var_attend_status.set("")      
+
+    def update_data(self):
+        selected = self.attendance_table.focus()
+
+        if not selected:
+            messagebox.showerror("Error", "Please select a record to update", parent=self.root)
+            return
+
+        updated_row = (
+            self.var_attend_id.get(),
+            self.var_attend_roll.get(),
+            self.var_attend_name.get(),
+            self.var_attend_dep.get(),
+            self.var_attend_time.get(),
+            self.var_attend_date.get(),
+            self.var_attend_status.get()
+        )
+        if "" in updated_row or self.var_attend_status.get() == "Status":
+            messagebox.showerror("Error", "All fields are required", parent=self.root)
+            return
+
+        # Update Treeview
+        self.attendance_table.item(selected, values=updated_row)
+
+        # Update mydata list
+        selected_index = self.attendance_table.index(selected)
+        mydata[selected_index] = list(updated_row)
+
+        messagebox.showinfo("Success", "Attendance updated successfully", parent=self.root)
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = attendance(root)
-    root.mainloop()  
+     root = tk.Tk() 
+     app = attendance(root)
+     root.mainloop()
