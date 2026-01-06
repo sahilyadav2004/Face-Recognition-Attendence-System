@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 from tkinter import messagebox
-from pymongo import MongoClient
 import cv2
 import os
 import numpy as np

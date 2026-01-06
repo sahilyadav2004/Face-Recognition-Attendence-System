@@ -2,7 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 from tkinter import messagebox
-from pymongo import MongoClient
+# from pymongo import MongoClient
+import sqlite3
 import cv2
 import os
 import numpy as np
@@ -52,7 +53,7 @@ class face_recognition:
                 # [attendance_id, sid, name, dep, date, time, status]
 
                 last_attendance_id = int(entry[0])   # keep updating → last row
-                sid_list.append(entry[1])
+                sid_list.append(int(entry[1]))
 
             if sid not in sid_list:
                 new_attendance_id = last_attendance_id + 1
@@ -80,22 +81,20 @@ class face_recognition:
                 
                 
                 if distance < 70:
-                    client = MongoClient("mongodb+srv://face:sahil123@cluster0.sbephlz.mongodb.net/?appName=Cluster0")
-                    db = client["student_db"]
-                    collection = db["students"]
-
-                    student = collection.find_one({"student_id": str(id)})
-
-                    if student:
-                        name = student["name"]
-                        sid = student.get("student_id", "N/A")
-                        dep= student.get("department", "N/A")
+                    # Fetching student details from sqlite3
+                    conn=get_db_connection()
+                    cursor=conn.execute("SELECT name,student_id,department FROM students WHERE student_id=?", (id,))
+                    row=cursor.fetchone()   
+                    if row:
+                        name = row["name"]
+                        sid = row["student_id"]
+                        dep = row["department"]
                     else:
                         name = "Unknown"
                         sid = "N/A"
-                        dep="N/A"
-
+                        dep = "N/A"
                     confidence_text = f"{int(100 - distance)}%"
+                    conn.close()
                 else:
                     name = "Unknown"
                     sid = "N/A"
@@ -107,6 +106,7 @@ class face_recognition:
                 if(name!="" and name!="unknown" and sid!="N/A"):
                     self.mark_attendance(sid, name,dep)
                 coord.append((x, y, w, h))
+                
 
             return coord
 
@@ -131,6 +131,12 @@ class face_recognition:
                 break
         video_cap.release()
         cv2.destroyAllWindows()
+
+def get_db_connection():
+    os.makedirs("database", exist_ok=True)
+    conn = sqlite3.connect("database/student.db")
+    conn.row_factory = sqlite3.Row
+    return conn        
 
 if __name__ == "__main__":
     root = tk.Tk()

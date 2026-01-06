@@ -14,3 +14,9 @@ Thumbs.db
 
 #data files
 data/
+#database files
+database/
+*.db
+
+#xml files
+face_trainer.xml
