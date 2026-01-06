@@ -3,7 +3,8 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 from tkinter import messagebox
-from pymongo import MongoClient
+# from pymongo import MongoClient
+import sqlite3
 import cv2
 
 
@@ -12,7 +13,8 @@ class Student:
         self.root = root
         self.root.geometry("1530x790+0+0")
         self.root.title("Face Recognition System")
-
+        # Register validation for integers
+        vcmd = (self.root.register(self.only_numbers), "%S")
         #variables
 
         self.var_department=tk.StringVar()
@@ -30,11 +32,8 @@ class Student:
         self.var_address=tk.StringVar()
         self.var_teacher=tk.StringVar()
         self.search_var = tk.StringVar()
-
+        self.search_entry_var = tk.StringVar()
        
-
-
-
 
 
         # Background image
@@ -170,9 +169,11 @@ class Student:
         student_id_label.grid(row=0, column=0, padx=10, pady=10)
         student_id_entry = tk.Entry(
             class_student_frame,
-             textvariable=self.var_std_id,
+            textvariable=self.var_std_id,
             font=("times new roman", 12, "bold"),
-            bg="white"
+            bg="white",
+            validate="key",
+            validatecommand=vcmd
         )
         student_id_entry.grid(row=0, column=1,padx=10, pady=10,sticky=tk.W)
         #student name
@@ -280,25 +281,6 @@ class Student:
             bg="white"
         )
         teacher_entry.grid(row=3, column=3,padx=10, pady=10,sticky=tk.W)
-        #radio buttons
-        # self.var_radio1=tk.StringVar()
-        # radiobutton1=ttk.Radiobutton(
-        #     class_student_frame,
-        #     variable=self.var_radio1,
-        #     text="Take Photo Sample",
-        #     value="yes",
-        # )
-        # self.var_radio2=tk.StringVar()
-        # radiobutton1.grid(row=4,column=0)
-        # radiobutton2=ttk.Radiobutton(
-        #     class_student_frame,
-        #     variable=self.var_radio1,
-        #     text="No Photo Sample",
-        #     value="no",
-        # )
-        # radiobutton2.grid(row=4,column=1)
-
-        #button frame
         btn_frame = tk.Frame(
             class_student_frame,
             relief=tk.RIDGE,
@@ -403,7 +385,7 @@ class Student:
         search_combo['values'] = ("Select", "Student ID", "Name", "Roll No")
         search_combo.current(0)
         search_combo.grid(row=0, column=1,padx=10, pady=10,sticky=tk.W)
-        self.search_entry_var = tk.StringVar()
+        
 
         search_entry = tk.Entry(
             search_frame,
@@ -505,80 +487,54 @@ class Student:
         self.student_table.bind("<ButtonRelease>", self.get_cursor)
         self.fetch_data()
     #function declaration
+
+    def only_numbers(self, char):
+        """Allow only digits"""
+        return char.isdigit()
+    #add data
     def add_data(self):
         if self.var_department.get() == "Select Department" or self.var_std_name.get() == "" or self.var_std_id.get() == "":
             messagebox.showerror("Error", "All fields are required", parent=self.root)
             return
 
         try:
-            #mongodb://localhost:27017/
-            client = MongoClient("mongodb+srv://face:sahil123@cluster0.sbephlz.mongodb.net/?appName=Cluster0")
-            db = client["student_db"]
-            collection = db["students"]
-
-            student_data = {
-                "department": self.var_department.get(),
-                "course": self.var_course.get(),
-                "year": self.var_year.get(),
-                "semester": self.var_semester.get(),
-                "student_id": self.var_std_id.get(),
-                "name": self.var_std_name.get(),
-                "division": self.var_div.get(),
-                "roll": self.var_roll.get(),
-                "email": self.var_email.get(),
-                "phone": self.var_phone.get(),
-                "address": self.var_address.get(),
-                "teacher": self.var_teacher.get(),
-                "photo_sample": "No"
-            }
-            existing_student = collection.find_one(
-                {"student_id": self.var_std_id.get()}
-            )
-            if existing_student:
-                messagebox.showerror("Error", "Student ID already exists", parent=self.root)
-                client.close()
-                return
-            
-            collection.insert_one(student_data)
-
+            conn= get_db_connection()
+            cursor=conn.cursor()
+            cursor.execute("""INSERT INTO students(department,course,year,semester,student_id,name,division,roll,email,phone,address,teacher,photo_sample) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""",(
+                self.var_department.get(),
+                self.var_course.get(),
+                self.var_year.get(),
+                self.var_semester.get(),
+                int(self.var_std_id.get()),
+                self.var_std_name.get(),
+                self.var_div.get(),
+                self.var_roll.get(),
+                self.var_email.get(),
+                self.var_phone.get(),
+                self.var_address.get(),
+                self.var_teacher.get(),
+                "No"
+            ))
+            conn.commit()
+            conn.close()
             self.fetch_data()
-
-            messagebox.showinfo("Success", "Student details added successfully", parent=self.root)
-            client.close()
+            messagebox.showinfo("Success", "Student details has been added successfully", parent=self.root)
+           
         except Exception as es:
             messagebox.showerror("Error", f"Due To: {str(es)}", parent=self.root)
+
     #fetch data
     def fetch_data(self):
-        try:
-            client = MongoClient("mongodb+srv://face:sahil123@cluster0.sbephlz.mongodb.net/?appName=Cluster0")
-            db = client["student_db"]
-            collection = db["students"]
-
-            # Clear previous data
+        conn= get_db_connection()
+        cursor=conn.cursor()
+        cursor.execute("SELECT * FROM students")
+        rows=cursor.fetchall()
+        if len(rows)!=0:
             self.student_table.delete(*self.student_table.get_children())
-
-            records = collection.find()
-            for row in records:
-                self.student_table.insert('', tk.END, values=(
-                    row.get('department',""),
-                    row.get('course',""),
-                    row.get('year',""),
-                    row.get('semester',""),
-                    row.get('student_id',""),
-                    row.get('name',""),
-                    row.get('division',""),
-                    row.get('roll',""),
-                    row.get('email',""),
-                    row.get('phone',""),
-                    row.get('address',""),
-                    row.get('teacher',""),
-                    row.get('photo_sample',"")
-                ))
-
-            client.close()
-        except Exception as es:
-            messagebox.showerror("Error", f"Due To: {str(es)}", parent=self.root)
-
+            for row in rows:
+                self.student_table.insert("", tk.END, values=row)
+            conn.commit()
+            conn.close()
 
     #   GET CURSOR
     def get_cursor(self, event=""):
@@ -601,7 +557,8 @@ class Student:
         self.var_phone.set(data[9])
         self.var_address.set(data[10])
         self.var_teacher.set(data[11])
-        # self.var_radio1.set(data[12])
+
+
     #update function
     def update_data(self):
         if self.var_department.get() == "Select Department" or self.var_std_name.get() == "" or self.var_std_id.get() == "":
@@ -610,36 +567,33 @@ class Student:
         try:
             Update = messagebox.askyesno("Update", "Do you want to update this student details?", parent=self.root)
             if Update > 0:
-                client = MongoClient("mongodb+srv://face:sahil123@cluster0.sbephlz.mongodb.net/?appName=Cluster0")
-                db = client["student_db"]
-                collection = db["students"]
-
-                student_data = {
-                    "department": self.var_department.get(),
-                    "course": self.var_course.get(),
-                    "year": self.var_year.get(),
-                    "semester": self.var_semester.get(),
-                    "name": self.var_std_name.get(),
-                    "division": self.var_div.get(),
-                    "roll": self.var_roll.get(),
-                    "email": self.var_email.get(),
-                    "phone": self.var_phone.get(),
-                    "address": self.var_address.get(),
-                    "teacher": self.var_teacher.get(),
-                }
-
-                collection.update_one(
-                    {"student_id": self.var_std_id.get()},
-                    {"$set": student_data}
-                )
-                self.fetch_data()
-                messagebox.showinfo("Success", "Student details updated successfully", parent=self.root)
-                client.close()
+                conn= get_db_connection()
+                cursor=conn.cursor()
+                cursor.execute("""UPDATE students SET department=?,course=?,year=?,semester=?,name=?,division=?,roll=?,email=?,phone=?,address=?,teacher=? WHERE student_id=?""",(
+                    self.var_department.get(),
+                    self.var_course.get(),
+                    self.var_year.get(),
+                    self.var_semester.get(),
+                    self.var_std_name.get(),
+                    self.var_div.get(),
+                    self.var_roll.get(),
+                    self.var_email.get(),
+                    self.var_phone.get(),
+                    self.var_address.get(),
+                    self.var_teacher.get(),
+                    int(self.var_std_id.get())
+                ))
             else:
                 if not Update:
                     return
+            conn.commit()
+            conn.close()
+            self.fetch_data()
+            
+            messagebox.showinfo("Success", "Student details successfully updated", parent=self.root)
         except Exception as es:
             messagebox.showerror("Error", f"Due To: {str(es)}", parent=self.root)
+
 
     #delete function
     def delete_data(self):
@@ -649,29 +603,19 @@ class Student:
         try:
             Delete = messagebox.askyesno("Delete", "Do you want to delete this student details?", parent=self.root)
             if Delete > 0:
-                student_id = self.var_std_id.get()
-                client = MongoClient("mongodb+srv://face:sahil123@cluster0.sbephlz.mongodb.net/?appName=Cluster0")
-                db = client["student_db"]
-                collection = db["students"]
-
-                collection.delete_one({"student_id": self.var_std_id.get()})
-                data_dir = "data"
-
-                if os.path.exists(data_dir):
-                    for file in os.listdir(data_dir):
-                        if file.startswith(f"user.{student_id}.") and file.endswith(".jpg"):
-                            file_path = os.path.join(data_dir, file)
-                            os.remove(file_path)
-
+                conn= get_db_connection()
+                cursor=conn.cursor()
+                cursor.execute("DELETE FROM students WHERE student_id=?", (int(self.var_std_id.get()),))
+                conn.commit()
+                conn.close()
                 self.fetch_data()
-                self.reset_data()
-                messagebox.showinfo("Success", "Student details deleted successfully", parent=self.root)
-                client.close()
+                messagebox.showinfo("Success", "Student details successfully deleted", parent=self.root)
             else:
                 if not Delete:
                     return
         except Exception as es:
             messagebox.showerror("Error", f"Due To: {str(es)}", parent=self.root)
+
     #reset function
     def reset_data(self):
         self.var_department.set("Select Department")
@@ -688,7 +632,7 @@ class Student:
         self.var_teacher.set("")
         
 
-
+    #generate data set or take photo samples
     def generatedataset(self):
         if (
             self.var_department.get() == "Select Department"
@@ -699,36 +643,15 @@ class Student:
             return
 
         try:
-            # ================= MongoDB =================
-            client = MongoClient("mongodb+srv://face:sahil123@cluster0.sbephlz.mongodb.net/?appName=Cluster0")
-            db = client["student_db"]
-            collection = db["students"]
-
-            student_data = {
-                "department": self.var_department.get(),
-                "course": self.var_course.get(),
-                "year": self.var_year.get(),
-                "semester": self.var_semester.get(),
-                "student_id": self.var_std_id.get(),
-                "name": self.var_std_name.get(),
-                "division": self.var_div.get(),
-                "roll": self.var_roll.get(),
-                "email": self.var_email.get(),
-                "phone": self.var_phone.get(),
-                "address": self.var_address.get(),
-                "teacher": self.var_teacher.get(),
-                "photo_sample": "No"
-            }
-
-            existing_student = collection.find_one(
-                {"student_id": self.var_std_id.get()}
-            ) 
-            if not existing_student:
-                messagebox.showerror("Error", "Student record not found. Please add the student details first.", parent=self.root)
-                client.close()  
-                return
-            
-                   
+            # ================= sqlite3 =================
+            conn=get_db_connection()
+            cursor=conn.cursor()
+            cursor.execute("""SELECT * FROM students WHERE student_id=?""",(int(self.var_std_id.get()),))
+            row=cursor.fetchone()
+            if row is None:
+                messagebox.showerror("Error", f"Student ID- {self.var_std_id.get()} not found in database", parent=self.root)
+                return       
+            conn.close()
             # ================= Face Classifier =================
             face_classifier = cv2.CascadeClassifier(
                 "haarcascade_frontalface_default.xml"
@@ -796,18 +719,18 @@ class Student:
                     break
 
             # Update photo sample status in database
-            collection.update_one(
-                {"student_id": self.var_std_id.get()},
-                {"$set": {
-                    "photo_sample": "Yes",
-                    "image_prefix": f"user.{self.var_std_id.get()}"
-                }}
-            )
-
+            conn=get_db_connection()
+            cursor=conn.cursor()
+            cursor.execute("""SELECT * FROM students WHERE student_id=?""",(int(self.var_std_id.get()),))
+            row=cursor.fetchone()
+            cursor.execute("""UPDATE students SET photo_sample=? WHERE student_id=?""",(
+                "Yes",
+                int(self.var_std_id.get())
+            ))
             cap.release()
             cv2.destroyAllWindows()
-            client.close()
-
+            conn.commit()
+            conn.close()
             messagebox.showinfo("Result", "Generating dataset completed!!!", parent=self.root)
             
             self.fetch_data()
@@ -818,56 +741,70 @@ class Student:
     #search function
     def search_data(self):
         try:
-            client = MongoClient("mongodb+srv://face:sahil123@cluster0.sbephlz.mongodb.net/?appName=Cluster0")
-            db = client["student_db"]
-            collection = db["students"]
-
+            conn= get_db_connection()
+            cursor=conn.cursor()
             search_by = self.search_var.get()
-            search_txt = self.search_entry_var.get()
+            search_value = self.search_entry_var.get()
 
-            if search_by == "Select" or search_txt == "":
-                messagebox.showerror("Error", "Please select a search criteria and enter search text", parent=self.root)
+            if search_by == "Select" or search_value == "":
+                messagebox.showerror("Error", "Please select a search criterion and enter a search value", parent=self.root)
                 return
 
-            query = {}
+            query = ""
             if search_by == "Student ID":
-                query["student_id"] = search_txt
+                try:
+                    sid = int(search_value)
+                except ValueError:
+                    messagebox.showerror("Error", "Student ID must be a number", parent=self.root)
+                    return
+                query = "SELECT * FROM students WHERE student_id = ?"
+                cursor.execute(query, (int(search_value),))
+
             elif search_by == "Name":
-                query["name"] = {"$regex": search_txt, "$options": "i"}
+                query = "SELECT * FROM students WHERE name LIKE ?"
+                cursor.execute(query, ('%' + search_value + '%',)) 
             elif search_by == "Roll No":
-                query["roll"] = search_txt
+                query = "SELECT * FROM students WHERE roll LIKE ?"
+                cursor.execute(query, ('%' + search_value + '%',))   
 
-            # Clear previous data
-            self.student_table.delete(*self.student_table.get_children())
-
-            records = collection.find(query)
-            for row in records:
-                self.student_table.insert('', tk.END, values=(
-                    row.get('department',""),
-                    row.get('course',""),
-                    row.get('year',""),
-                    row.get('semester',""),
-                    row.get('student_id',""),
-                    row.get('name',""),
-                    row.get('division',""),
-                    row.get('roll',""),
-                    row.get('email',""),
-                    row.get('phone',""),
-                    row.get('address',""),
-                    row.get('teacher',""),
-                    row.get('photo_sample',"")
-                ))
-
-            client.close()
+            rows = cursor.fetchall()
+            if len(rows) != 0:
+                self.student_table.delete(*self.student_table.get_children())
+                for row in rows:
+                    self.student_table.insert("", tk.END, values=row)
+            else:
+                messagebox.showinfo("Info", "No records found", parent=self.root)
+            conn.close()
         except Exception as es:
             messagebox.showerror("Error", f"Due To: {str(es)}", parent=self.root)
 
+
+def get_db_connection():
+    os.makedirs("database", exist_ok=True)
+    conn = sqlite3.connect("database/student.db")
+    cursor=conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS students (
+            department TEXT,
+            course TEXT,
+            year TEXT,
+            semester TEXT,
+            student_id INTEGER PRIMARY KEY,
+            name TEXT,
+            division TEXT,
+            roll TEXT,
+            email TEXT,
+            phone TEXT,
+            address TEXT,
+            teacher TEXT,
+            photo_sample TEXT
+        )
+    """)
+    conn.commit()
+    return conn
+
+
 if __name__ == "__main__":
-    client = MongoClient("mongodb+srv://face:sahil123@cluster0.sbephlz.mongodb.net/?appName=Cluster0")
-    db = client["student_db"]
-    collection = db["students"]
-    collection.create_index("student_id", unique=True)
-    client.close()
     root = tk.Tk()
     obj = Student(root)
-    root.mainloop()        #root.mainloop() starts the Tkinter event loop that keeps the GUI running and responsive until the window is closed.
+    root.mainloop()       #root.mainloop() starts the Tkinter event loop that keeps the GUI running and responsive until the window is closed.

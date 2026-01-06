@@ -181,7 +181,7 @@ class attendance:
 
         content = self.attendance_table.item(cursor_row)
         data = content.get("values", [])
-    # 🛑 SAFETY CHECK
+    #  SAFETY CHECK
         if len(data) < 7:
             return
 

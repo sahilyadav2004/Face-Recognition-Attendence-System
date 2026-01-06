@@ -85,6 +85,7 @@ class Face_Recognition_System:
             os.startfile("data")
         except Exception as e:
             print(f"Error opening folder: {e}")
+            
     def exit(self):
         self.exit=tk.messagebox.askyesno("Face Recognition","Are you sure to exit this project",parent=self.root)
         if self.exit>0:
