@@ -1,20 +1,31 @@
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
-from student import Student
 import os
+
+from student import Student
 from train import Train
 from face_recognition import face_recognition
 from attendance import attendance
 from developer import Developer
 from help import Help
+
+
 class Face_Recognition_System:
     def __init__(self, root):
         self.root = root
         self.root.geometry("1530x990+0+0")
         self.root.title("Face Recognition System")
 
-        # Background image
+        # ================= WINDOW REFERENCES =================
+        self.student_window = None
+        self.train_window = None
+        self.face_window = None
+        self.attendance_window = None
+        self.developer_window = None
+        self.help_window = None
+
+        # ================= BACKGROUND =================
         bg_img = Image.open(r"images\image background 1.jpg")
         bg_img = bg_img.resize((1530, 990))
         self.photoimg = ImageTk.PhotoImage(bg_img)
@@ -31,92 +42,127 @@ class Face_Recognition_System:
         )
         title_lbl.place(x=0, y=0, width=1530, height=45)
 
-        # ===== First Row =====
-        b1 = tk.Button(img_l, text="Student",
-                       font=("times new roman", 26, "bold"),command=self.student_details,
-                       bg="darkblue", fg="white", cursor="hand2")
-        b1.place(x=200, y=200, width=220, height=100)
+        # ================= BUTTONS =================
+        tk.Button(
+            img_l, text="Student",
+            command=self.open_student,
+            font=("times new roman", 26, "bold"),
+            bg="darkblue", fg="white", cursor="hand2"
+        ).place(x=200, y=200, width=220, height=100)
 
-        b3 = tk.Button(img_l, text="Attendence",
-                        command=self.attendance_system,
-                       font=("times new roman", 26, "bold"),
-                       bg="darkblue", fg="white", cursor="hand2")
-        b3.place(x=500, y=200, width=220, height=100)
+        tk.Button(
+            img_l, text="Attendance",
+            command=self.open_attendance,
+            font=("times new roman", 26, "bold"),
+            bg="darkblue", fg="white", cursor="hand2"
+        ).place(x=500, y=200, width=220, height=100)
 
-        b5 = tk.Button(img_l, text="Train",
-                       font=("times new roman", 26, "bold"),
-                       command=self.train_data,
-                       bg="darkblue", fg="white", cursor="hand2")
-        b5.place(x=800, y=200, width=220, height=100)
+        tk.Button(
+            img_l, text="Train",
+            command=self.open_train,
+            font=("times new roman", 26, "bold"),
+            bg="darkblue", fg="white", cursor="hand2"
+        ).place(x=800, y=200, width=220, height=100)
 
-        b7 = tk.Button(img_l, text="Developer",
-                          command=self.developer,
-                       font=("times new roman", 26, "bold"),
-                       bg="darkblue", fg="white", cursor="hand2")
-        b7.place(x=1100, y=200, width=220, height=100)
+        tk.Button(
+            img_l, text="Developer",
+            command=self.open_developer,
+            font=("times new roman", 26, "bold"),
+            bg="darkblue", fg="white", cursor="hand2"
+        ).place(x=1100, y=200, width=220, height=100)
 
-        # ===== Second Row =====
-        b2 = tk.Button(img_l, text="Detect Face",
-                       font=("times new roman", 26, "bold"),
-                       command=self.face_recognition,
-                       bg="darkblue", fg="white", cursor="hand2")
-        b2.place(x=200, y=500, width=220, height=100)
+        tk.Button(
+            img_l, text="Detect Face",
+            command=self.open_face,
+            font=("times new roman", 26, "bold"),
+            bg="darkblue", fg="white", cursor="hand2"
+        ).place(x=200, y=500, width=220, height=100)
 
-        b4 = tk.Button(img_l, text="Help",
-                          command=self.help,
-                       font=("times new roman", 26, "bold"),
-                       bg="darkblue", fg="white", cursor="hand2")
-        b4.place(x=500, y=500, width=220, height=100)
+        tk.Button(
+            img_l, text="Help",
+            command=self.open_help,
+            font=("times new roman", 26, "bold"),
+            bg="darkblue", fg="white", cursor="hand2"
+        ).place(x=500, y=500, width=220, height=100)
 
-        b6 = tk.Button(img_l, text="Photos",
-                       font=("times new roman", 26, "bold"),
-                       command=self.open_img,
-                       bg="darkblue", fg="white", cursor="hand2")
-        b6.place(x=800, y=500, width=220, height=100)
+        tk.Button(
+            img_l, text="Photos",
+            command=self.open_img,
+            font=("times new roman", 26, "bold"),
+            bg="darkblue", fg="white", cursor="hand2"
+        ).place(x=800, y=500, width=220, height=100)
 
-        b8 = tk.Button(img_l, text="Exit",
-                       font=("times new roman", 26, "bold"),
-                          command=self.exit,
-                       bg="darkblue", fg="white", cursor="hand2")
-        b8.place(x=1100, y=500, width=220, height=100)
-    
+        tk.Button(
+            img_l, text="Exit",
+            command=self.exit_app,
+            font=("times new roman", 26, "bold"),
+            bg="darkblue", fg="white", cursor="hand2"
+        ).place(x=1100, y=500, width=220, height=100)
+
+    # ================= GENERIC WINDOW OPENER =================
+    def _open_window(self, window_attr, window_class, modal=False):
+        win = getattr(self, window_attr)
+
+        if win is None or not win.winfo_exists():
+            win = tk.Toplevel(self.root)
+            setattr(self, window_attr, win)
+
+            if modal:
+                win.grab_set()
+
+            window_class(win)
+
+            win.protocol(
+                "WM_DELETE_WINDOW",
+                lambda: self._close_window(window_attr)
+            )
+        else:
+            win.deiconify()
+            win.focus_force()
+            win.lift()
+
+    def _close_window(self, window_attr):
+        win = getattr(self, window_attr)
+        if win:
+            win.destroy()
+            setattr(self, window_attr, None)
+
+    # ================= OPEN METHODS =================
+    def open_student(self):
+        self._open_window("student_window", Student)
+
+    def open_train(self):
+        self._open_window("train_window", Train)
+
+    def open_face(self):
+        self._open_window("face_window", face_recognition)
+
+    def open_attendance(self):
+        self._open_window("attendance_window", attendance, modal=True)
+
+    def open_developer(self):
+        self._open_window("developer_window", Developer)
+
+    def open_help(self):
+        self._open_window("help_window", Help)
+
+    # ================= UTILITIES =================
     def open_img(self):
         try:
             os.startfile("data")
         except Exception as e:
-            print(f"Error opening folder: {e}")
-            
-    def exit(self):
-        self.exit=tk.messagebox.askyesno("Face Recognition","Are you sure to exit this project",parent=self.root)
-        if self.exit>0:
+            print("Error opening folder:", e)
+
+    def exit_app(self):
+        if tk.messagebox.askyesno(
+            "Face Recognition",
+            "Are you sure you want to exit?",
+            parent=self.root
+        ):
             self.root.destroy()
 
-    def student_details(self):
-        self.new_window=tk.Toplevel(self.root)
-        self.app=Student(self.new_window)
 
-    def train_data(self):
-        self.new_window=tk.Toplevel(self.root)
-        self.app=Train(self.new_window)
-
-    def face_recognition(self):
-        self.new_window=tk.Toplevel(self.root)
-        self.app=face_recognition(self.new_window)   
-
-    def attendance_system(self):
-        self.new_window = tk.Toplevel(self.root)
-        self.new_window.grab_set()          # 🔒 make modal
-        self.new_window.focus_force()
-        self.app = attendance(self.new_window)
-
-    def developer(self):
-        self.new_window=tk.Toplevel(self.root)
-        self.app=Developer(self.new_window)
-        
-    def help(self):
-        self.new_window=tk.Toplevel(self.root)
-        self.app=Help(self.new_window)
 if __name__ == "__main__":
     root = tk.Tk()
-    obj = Face_Recognition_System(root)
+    app = Face_Recognition_System(root)
     root.mainloop()
